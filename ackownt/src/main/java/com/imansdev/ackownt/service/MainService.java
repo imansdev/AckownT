@@ -3,6 +3,7 @@ package com.imansdev.ackownt.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.imansdev.ackownt.auth.JwtUtil;
 import com.imansdev.ackownt.dto.UserDTO;
 import com.imansdev.ackownt.model.Users;
 import com.imansdev.ackownt.repository.AccountsRepository;
@@ -23,6 +24,9 @@ public class MainService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Transactional
     public UserDTO createUser(Users user) {
@@ -54,4 +58,21 @@ public class MainService {
                 user.getGender().toString(), user.getMilitaryStatus().toString());
     }
 
+
+
+    public Users authenticateUser(String email, String password) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("Invalid email"));
+
+        if (passwordEncoder.matches(password, user.getPassword())) {
+            return user;
+        } else {
+            throw new ValidationException("Invalid password");
+        }
+    }
+
+    public String GenerateToken(String email, String password) {
+        Users user = authenticateUser(email, password);
+        return jwtUtil.generateToken(user.getEmail());
+    }
 }
