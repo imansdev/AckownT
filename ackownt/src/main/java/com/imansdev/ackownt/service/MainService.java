@@ -1,16 +1,31 @@
 package com.imansdev.ackownt.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 import com.imansdev.ackownt.auth.JwtUtil;
+import com.imansdev.ackownt.controller.exception.CustomServiceException;
+import com.imansdev.ackownt.dto.AccountDTO;
+import com.imansdev.ackownt.dto.TransactionDTO;
+import com.imansdev.ackownt.dto.UpdateUserDTO;
 import com.imansdev.ackownt.dto.UserDTO;
+import com.imansdev.ackownt.model.Accounts;
+import com.imansdev.ackownt.model.Transactions;
+import com.imansdev.ackownt.model.Transactions.Description;
+import com.imansdev.ackownt.model.Transactions.TransactionStatus;
+import com.imansdev.ackownt.model.Transactions.TransactionType;
 import com.imansdev.ackownt.model.Users;
 import com.imansdev.ackownt.repository.AccountsRepository;
 import com.imansdev.ackownt.repository.TransactionsRepository;
 import com.imansdev.ackownt.repository.UsersRepository;
-import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MainService {
@@ -24,7 +39,6 @@ public class MainService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -58,7 +72,161 @@ public class MainService {
                 user.getGender().toString(), user.getMilitaryStatus().toString());
     }
 
+    @Transactional
+    public TransactionDTO chargeAccount(String email, Long amount) {
+        if (amount == null || amount <= 0) {
+            throw new ValidationException("Amount must be a positive number");
+        }
 
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomServiceException("User not found"));
+
+        Accounts account = accountsRepository.findByUserId(user.getId()).orElse(null);
+
+        if (account == null) {
+            if (amount <= 10_000L) {
+                throw new ValidationException("First charge amount must be more than 10,000");
+            }
+
+            account = new Accounts();
+            account.setUser(user);
+            account.setBalance(amount);
+            accountsRepository.save(account);
+        } else {
+            account.setBalance(account.getBalance() + amount);
+            accountsRepository.save(account);
+        }
+
+        Transactions transaction = new Transactions();
+        transaction.setUser(user);
+        transaction.setTransactionName(TransactionType.CHARGE);
+        transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
+        transaction.setAmount(amount);
+        transaction.setDescription(Description.CHARGING_SUCCESSFUL);
+        transaction.setWithdrawalBalance(account.getBalance() - 10_000L);
+
+        transactionsRepository.save(transaction);
+
+        return new TransactionDTO(transaction.getTransactionName().toString(),
+                transaction.getTransactionStatus().toString(), transaction.getAmount(),
+                transaction.getTrackingNumber(), transaction.getTransactionDate(),
+                transaction.getDescription().toString(), transaction.getWithdrawalBalance());
+    }
+
+    @Transactional
+    public TransactionDTO deductAmount(String email, Long amount) {
+        if (amount == null || amount <= 100_000L || amount >= 100_000_000L) {
+            throw new ValidationException("Amount must be between 100,000 and 100,000,000");
+        }
+
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+        Accounts account = accountsRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ValidationException("User's account not found"));
+
+
+        LocalDate today = LocalDate.now();
+        Long totalDeductionsToday =
+                transactionsRepository.findTotalDailyDeductions(user.getId(), today);
+
+        if (totalDeductionsToday + amount > 100_000_000L) {
+            throw new ValidationException("Total daily deductions must be less than 100,000,000");
+        }
+
+        if (account.getBalance() < (amount - 10_000L)) {
+            throw new ValidationException("Insufficient balance for this deduction");
+        }
+
+
+        account.setBalance(account.getBalance() - amount);
+        accountsRepository.save(account);
+
+        Transactions transaction = new Transactions();
+        transaction.setUser(user);
+        transaction.setTransactionName(Transactions.TransactionType.DEDUCTION);
+        transaction.setTransactionStatus(Transactions.TransactionStatus.SUCCESSFUL);
+        transaction.setAmount(amount);
+        transaction.setDescription(Transactions.Description.DEDUCTION_SUCCESSFUL);
+        transaction.setWithdrawalBalance(account.getBalance() - 10_000L);
+
+        transactionsRepository.save(transaction);
+
+        return new TransactionDTO(transaction.getTransactionName().toString(),
+                transaction.getTransactionStatus().toString(), transaction.getAmount(),
+                transaction.getTrackingNumber(), transaction.getTransactionDate(),
+                transaction.getDescription().toString(), transaction.getWithdrawalBalance());
+    }
+
+    public Map<String, Object> getUserAccountInfoAndTransactions(String email) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+        Accounts account = accountsRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ValidationException("User's account not found"));
+
+        List<Transactions> transactions = transactionsRepository.findByUserId(user.getId());
+
+        AccountDTO accountDTO = new AccountDTO(account.getAccountNumber(), account.getBalance(),
+                account.getAccountCreationDate());
+
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(transaction -> new TransactionDTO(transaction.getTransactionName().toString(),
+                        transaction.getTransactionStatus().toString(), transaction.getAmount(),
+                        transaction.getTrackingNumber(), transaction.getTransactionDate(),
+                        transaction.getDescription().toString(),
+                        transaction.getWithdrawalBalance()))
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("account", accountDTO);
+        response.put("transactions", transactionDTOs);
+
+        return response;
+    }
+
+    public UserDTO getUserInfo(String email) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+        return new UserDTO(user.getName(), user.getSurname(), user.getNationalId(),
+                user.getDateOfBirth().toString(), user.getEmail(), user.getPhoneNumber(),
+                user.getGender().toString(), user.getMilitaryStatus().toString());
+    }
+
+    @Transactional
+    public UserDTO updateUserInfo(String email, @Valid UpdateUserDTO updateUserDTO) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+
+        // Update the user details with the provided information
+        user.setName(updateUserDTO.getName());
+        user.setSurname(updateUserDTO.getSurname());
+        user.setPhoneNumber(updateUserDTO.getPhoneNumber());
+        user.setMilitaryStatus(Users.MilitaryStatus.valueOf(updateUserDTO.getMilitaryStatus()));
+
+        // validUserSetter.validateEntity(user);
+        usersRepository.findByPhoneNumber(user.getPhoneNumber()).ifPresent(u -> {
+            throw new ValidationException("Phone number must be unique");
+        });
+        usersRepository.save(user);
+
+        // Return updated user information as a DTO
+        return new UserDTO(user.getName(), user.getSurname(), user.getNationalId(),
+                user.getDateOfBirth().toString(), user.getEmail(), user.getPhoneNumber(),
+                user.getGender().toString(), user.getMilitaryStatus().toString());
+    }
+
+    @Transactional
+    public void deleteUserAndRelatedData(String email) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+        transactionsRepository.deleteByUserId(user.getId());
+
+        usersRepository.deleteById(user.getId());
+    }
 
     public Users authenticateUser(String email, String password) {
         Users user = usersRepository.findByEmail(email)
