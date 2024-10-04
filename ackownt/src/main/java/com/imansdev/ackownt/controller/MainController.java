@@ -41,6 +41,15 @@ public class MainController {
         return response;
     }
 
+    @PostMapping("/account/create")
+    @ResponseBody
+    public TransactionDTO createAccount(@RequestParam("amount") Long amount) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        return mainService.createAccount(email, amount);
+    }
+
     @PostMapping("/account/transaction/charge")
     @ResponseBody
     public TransactionDTO chargeAccount(@RequestParam("amount") Long amount) {

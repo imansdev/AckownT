@@ -1,0 +1,365 @@
+{
+  "info": {
+    "name": "AckownT",
+    "description": "Postman collection for testing AckownT API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create User (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"iman\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"0018844221\",\n  \"dateOfBirth\": \"2000-02-02\",\n  \"email\": \"imanabc@example.com\",\n  \"phoneNumber\": \"09129966331\",\n  \"password\": \"password123\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"COMPLETED_SERVICE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create User (Invalid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"001\",\n  \"dateOfBirth\": \"2024-02-02\",\n  \"email\": \"invalid-email\",\n  \"phoneNumber\": \"091299\",\n  \"password\": \"\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"NONE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "create"]
+        }
+      }
+    },
+    {
+      "name": "Login User (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"imanabc@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Capture the token from the response",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"jwt_token\", jsonData.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login User (Invalid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"nonexistent@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "login"]
+        }
+      }
+    },
+    {
+      "name": "Create Account (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/create?amount=20000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "create"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "900000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Account (Invalid Amount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/create?amount=5000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "create"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "5000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Charge Account (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/charge?amount=15000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "charge"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "150000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Charge Account (Invalid Amount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/charge?amount=-500",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "charge"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "-500"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Deduct Amount (Valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=2000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "deduction"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "150000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Deduct Amount (Invalid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=50000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "deduction"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "50000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "List User Transactions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/list",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "list"]
+        }
+      }
+    },
+    {
+      "name": "Get User Info",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account"]
+        }
+      }
+    },
+    {
+      "name": "Update User Info (Valid)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"newName\",\n  \"surname\": \"newSurname\",\n  \"phoneNumber\": \"09129966332\",\n  \"militaryStatus\": \"EXEMPT_FROM_SERVICE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/update",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "update"]
+        }
+      }
+    },
+    {
+      "name": "Delete User and Related Data",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/delete",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "delete"]
+        }
+      }
+    }
+  ]
+}

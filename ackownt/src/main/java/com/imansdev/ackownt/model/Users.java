@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.Period;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.imansdev.ackownt.validation.ValidMilitaryStatus;
+import com.imansdev.ackownt.validation.ValidNationalId;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,8 +23,8 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 
 @Entity
+@ValidMilitaryStatus
 public class Users {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,11 +45,11 @@ public class Users {
     @Column(nullable = false)
     private String surname;
 
+    @ValidNationalId
     @Column(unique = true, length = 10, nullable = false)
-    @Pattern(regexp = "\\d{10}", message = "National ID must be exactly 10 digits")
     private String nationalId;
 
-    @Past(message = "Date of birth must be in the past")
+
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
@@ -56,7 +58,7 @@ public class Users {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Gender gender = Gender.FEMALE;
+    private Gender gender;
 
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
@@ -64,13 +66,15 @@ public class Users {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank(message = "Phone number is required")
+    @NotNull
     @Pattern(regexp = "\\d{11}", message = "Phone number must be exactly 11 digits")
     @Column(nullable = false, unique = true)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MilitaryStatus militaryStatus = MilitaryStatus.NONE;
+    private MilitaryStatus militaryStatus;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -182,7 +186,5 @@ public class Users {
                 + gender + ", email=" + email + ", phoneNumber=" + phoneNumber + ", militaryStatus="
                 + militaryStatus + "]";
     }
-
-
 
 }

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,15 @@ public class MainService {
     private BCryptPasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Value("${account.minBalance}")
+    private long minBalance;
+
+    @Value("${account.maxWithdrawal}")
+    private long maxWithdrawal;
+
+    @Value("${account.minWithdrawal}")
+    private long minWithdrawal;
 
     @Transactional
     public UserDTO createUser(Users user) {
@@ -73,6 +83,41 @@ public class MainService {
     }
 
     @Transactional
+    public TransactionDTO createAccount(String email, Long amount) {
+        if (amount == null || amount <= minBalance) {
+            throw new ValidationException("Initial deposit must be greater than " + minBalance);
+        }
+
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomServiceException("User not found"));
+
+        Accounts existingAccount = accountsRepository.findByUserId(user.getId()).orElse(null);
+        if (existingAccount != null) {
+            throw new ValidationException("Account already exists for the user");
+        }
+
+        Accounts account = new Accounts();
+        account.setUser(user);
+        account.setBalance(amount);
+        accountsRepository.save(account);
+
+        Transactions transaction = new Transactions();
+        transaction.setUser(user);
+        transaction.setTransactionName(TransactionType.CHARGE);
+        transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
+        transaction.setAmount(amount);
+        transaction.setDescription(Description.CHARGING_SUCCESSFUL);
+        transaction.setWithdrawalBalance(account.getBalance() - minBalance);
+
+        transactionsRepository.save(transaction);
+
+        return new TransactionDTO(transaction.getTransactionName().toString(),
+                transaction.getTransactionStatus().toString(), transaction.getAmount(),
+                transaction.getTrackingNumber(), transaction.getTransactionDate(),
+                transaction.getDescription().toString(), transaction.getWithdrawalBalance());
+    }
+
+    @Transactional
     public TransactionDTO chargeAccount(String email, Long amount) {
         if (amount == null || amount <= 0) {
             throw new ValidationException("Amount must be a positive number");
@@ -81,21 +126,12 @@ public class MainService {
         Users user = usersRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomServiceException("User not found"));
 
-        Accounts account = accountsRepository.findByUserId(user.getId()).orElse(null);
+        Accounts account = accountsRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ValidationException(
+                        "User's account not found. Please create an account first."));
 
-        if (account == null) {
-            if (amount <= 10_000L) {
-                throw new ValidationException("First charge amount must be more than 10,000");
-            }
-
-            account = new Accounts();
-            account.setUser(user);
-            account.setBalance(amount);
-            accountsRepository.save(account);
-        } else {
-            account.setBalance(account.getBalance() + amount);
-            accountsRepository.save(account);
-        }
+        account.setBalance(account.getBalance() + amount);
+        accountsRepository.save(account);
 
         Transactions transaction = new Transactions();
         transaction.setUser(user);
@@ -103,7 +139,7 @@ public class MainService {
         transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
         transaction.setDescription(Description.CHARGING_SUCCESSFUL);
-        transaction.setWithdrawalBalance(account.getBalance() - 10_000L);
+        transaction.setWithdrawalBalance(account.getBalance() - minBalance);
 
         transactionsRepository.save(transaction);
 
@@ -115,8 +151,9 @@ public class MainService {
 
     @Transactional
     public TransactionDTO deductAmount(String email, Long amount) {
-        if (amount == null || amount <= 100_000L || amount >= 100_000_000L) {
-            throw new ValidationException("Amount must be between 100,000 and 100,000,000");
+        if (amount == null || amount <= minWithdrawal || amount >= maxWithdrawal) {
+            throw new ValidationException(
+                    "Amount must be between " + minWithdrawal + " and " + maxWithdrawal);
         }
 
         Users user = usersRepository.findByEmail(email)
@@ -130,11 +167,12 @@ public class MainService {
         Long totalDeductionsToday =
                 transactionsRepository.findTotalDailyDeductions(user.getId(), today);
 
-        if (totalDeductionsToday + amount > 100_000_000L) {
-            throw new ValidationException("Total daily deductions must be less than 100,000,000");
+        if (totalDeductionsToday + amount > maxWithdrawal) {
+            throw new ValidationException(
+                    "Total daily deductions must be less than " + maxWithdrawal);
         }
 
-        if (account.getBalance() < (amount - 10_000L)) {
+        if (account.getBalance() < (amount - minBalance)) {
             throw new ValidationException("Insufficient balance for this deduction");
         }
 
@@ -148,7 +186,7 @@ public class MainService {
         transaction.setTransactionStatus(Transactions.TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
         transaction.setDescription(Transactions.Description.DEDUCTION_SUCCESSFUL);
-        transaction.setWithdrawalBalance(account.getBalance() - 10_000L);
+        transaction.setWithdrawalBalance(account.getBalance() - minBalance);
 
         transactionsRepository.save(transaction);
 
