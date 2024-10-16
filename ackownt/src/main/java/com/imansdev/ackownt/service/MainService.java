@@ -1,26 +1,28 @@
 package com.imansdev.ackownt.service;
 
 import com.imansdev.ackownt.auth.JwtUtil;
-import com.imansdev.ackownt.controller.exception.CustomServiceException;
 import com.imansdev.ackownt.dto.AccountDTO;
 import com.imansdev.ackownt.dto.TransactionDTO;
 import com.imansdev.ackownt.dto.UpdateUserDTO;
 import com.imansdev.ackownt.dto.UserDTO;
+import com.imansdev.ackownt.enums.TransactionDescription;
+import com.imansdev.ackownt.enums.TransactionStatus;
+import com.imansdev.ackownt.enums.TransactionType;
+import com.imansdev.ackownt.exception.CustomServiceException;
 import com.imansdev.ackownt.model.Accounts;
 import com.imansdev.ackownt.model.Transactions;
-import com.imansdev.ackownt.model.Transactions.Description;
-import com.imansdev.ackownt.model.Transactions.TransactionStatus;
-import com.imansdev.ackownt.model.Transactions.TransactionType;
 import com.imansdev.ackownt.model.Users;
 import com.imansdev.ackownt.repository.AccountsRepository;
 import com.imansdev.ackownt.repository.TransactionsRepository;
 import com.imansdev.ackownt.repository.UsersRepository;
-import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,9 @@ public class MainService {
     private BCryptPasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private Validator validator;
 
     @Value("${account.minBalance}")
     private long minBalance;
@@ -106,7 +111,7 @@ public class MainService {
         transaction.setTransactionName(TransactionType.CHARGE);
         transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
-        transaction.setDescription(Description.CHARGING_SUCCESSFUL);
+        transaction.setDescription(TransactionDescription.CHARGING_SUCCESSFUL);
         transaction.setWithdrawalBalance(account.getBalance() - minBalance);
 
         transactionsRepository.save(transaction);
@@ -138,7 +143,7 @@ public class MainService {
         transaction.setTransactionName(TransactionType.CHARGE);
         transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
-        transaction.setDescription(Description.CHARGING_SUCCESSFUL);
+        transaction.setDescription(TransactionDescription.CHARGING_SUCCESSFUL);
         transaction.setWithdrawalBalance(account.getBalance() - minBalance);
 
         transactionsRepository.save(transaction);
@@ -182,10 +187,10 @@ public class MainService {
 
         Transactions transaction = new Transactions();
         transaction.setUser(user);
-        transaction.setTransactionName(Transactions.TransactionType.DEDUCTION);
-        transaction.setTransactionStatus(Transactions.TransactionStatus.SUCCESSFUL);
+        transaction.setTransactionName(TransactionType.DEDUCTION);
+        transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
-        transaction.setDescription(Transactions.Description.DEDUCTION_SUCCESSFUL);
+        transaction.setDescription(TransactionDescription.DEDUCTION_SUCCESSFUL);
         transaction.setWithdrawalBalance(account.getBalance() - minBalance);
 
         transactionsRepository.save(transaction);
@@ -233,21 +238,32 @@ public class MainService {
     }
 
     @Transactional
-    public UserDTO updateUserInfo(String email, @Valid UpdateUserDTO updateUserDTO) {
+    public UserDTO updateUserInfo(String email, UpdateUserDTO updateUserDTO) {
         Users user = usersRepository.findByEmail(email)
                 .orElseThrow(() -> new ValidationException("User not found"));
 
+        // Check if the new phone number exists for another user
+        usersRepository.findByPhoneNumber(updateUserDTO.getPhoneNumber()).ifPresent(u -> {
+            if (!u.getId().equals(user.getId())) {
+                throw new ValidationException("Phone number must be unique");
+            }
+        });
 
         // Update the user details with the provided information
         user.setName(updateUserDTO.getName());
         user.setSurname(updateUserDTO.getSurname());
         user.setPhoneNumber(updateUserDTO.getPhoneNumber());
-        user.setMilitaryStatus(Users.MilitaryStatus.valueOf(updateUserDTO.getMilitaryStatus()));
+        user.setMilitaryStatus(updateUserDTO.getMilitaryStatus());
 
-        // validUserSetter.validateEntity(user);
-        usersRepository.findByPhoneNumber(user.getPhoneNumber()).ifPresent(u -> {
-            throw new ValidationException("Phone number must be unique");
-        });
+        Set<ConstraintViolation<Users>> violations = validator.validate(user);
+        if (!violations.isEmpty()) {
+            StringBuilder vio = new StringBuilder();
+            for (ConstraintViolation<Users> violation : violations) {
+                vio.append(violation.getMessage()).append(", ");
+            }
+            throw new ValidationException(vio.toString());
+        }
+
         usersRepository.save(user);
 
         // Return updated user information as a DTO

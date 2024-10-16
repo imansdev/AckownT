@@ -1,4 +1,4 @@
-package com.imansdev.ackownt.controller.exception;
+package com.imansdev.ackownt.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;

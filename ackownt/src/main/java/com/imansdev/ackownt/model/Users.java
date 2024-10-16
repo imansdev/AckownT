@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.Period;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.imansdev.ackownt.enums.Gender;
+import com.imansdev.ackownt.enums.MilitaryStatus;
 import com.imansdev.ackownt.validation.ValidMilitaryStatus;
 import com.imansdev.ackownt.validation.ValidNationalId;
 import jakarta.persistence.CascadeType;
@@ -19,7 +21,6 @@ import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 
 @Entity
@@ -80,39 +81,7 @@ public class Users {
     @JsonIgnore
     private Accounts account;
 
-    public enum Gender {
-        MALE, FEMALE
-    }
-
-    public enum MilitaryStatus {
-        CURRENTLY_SERVING, EXEMPT_FROM_SERVICE, CONSCRIPTED, COMPLETED_SERVICE, NONE
-    }
-
-
-
     public Users() {}
-
-    public Users(Long id, @NotBlank(message = "Name is required") @NotNull String name,
-            @NotBlank(message = "Surname is required") @NotNull String surname,
-            @Pattern(regexp = "\\d{10}",
-                    message = "National ID must be exactly 10 digits") String nationalId,
-            @Past(message = "Date of birth must be in the past") LocalDate dateOfBirth,
-            Gender gender,
-            @Email(message = "Invalid email format") @NotBlank(
-                    message = "Email is required") @NotNull String email,
-            @Pattern(regexp = "\\d{11}",
-                    message = "Phone number must be exactly 11 digits") String phoneNumber,
-            MilitaryStatus militaryStatus) {
-        this.id = id;
-        this.name = name;
-        this.surname = surname;
-        this.nationalId = nationalId;
-        this.dateOfBirth = dateOfBirth;
-        this.gender = gender;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.militaryStatus = militaryStatus;
-    }
 
     public Long getId() {
         return id;

@@ -2,6 +2,9 @@ package com.imansdev.ackownt.model;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import com.imansdev.ackownt.enums.TransactionDescription;
+import com.imansdev.ackownt.enums.TransactionStatus;
+import com.imansdev.ackownt.enums.TransactionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,7 +44,7 @@ public class Transactions {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Description description;
+    private TransactionDescription description;
 
     @Column(nullable = false)
     private Long withdrawalBalance;
@@ -63,30 +66,6 @@ public class Transactions {
         return String.format("%06d", randomNumber);
     }
 
-    public enum TransactionType {
-        CHARGE, DEDUCTION
-    }
-
-    public enum TransactionStatus {
-        SUCCESSFUL, UNSUCCESSFUL
-    }
-
-    public enum Description {
-        CHARGING_SUCCESSFUL("charging was done successfully"), DEDUCTION_SUCCESSFUL(
-                "deduction was done successfully"), CHARGING_FAILED(
-                        "charging failed"), DEDUCTION_FAILED("deduction failed");
-
-        private final String message;
-
-        Description(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-    }
-
     public void setTransactionName(TransactionType transactionName) {
         this.transactionName = transactionName;
     }
@@ -99,7 +78,7 @@ public class Transactions {
         this.amount = amount;
     }
 
-    public void setDescription(Description description) {
+    public void setDescription(TransactionDescription description) {
         this.description = description;
     }
 
@@ -131,7 +110,7 @@ public class Transactions {
         return transactionDate;
     }
 
-    public Description getDescription() {
+    public TransactionDescription getDescription() {
         return description;
     }
 

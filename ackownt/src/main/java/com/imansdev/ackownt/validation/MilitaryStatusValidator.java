@@ -1,5 +1,7 @@
 package com.imansdev.ackownt.validation;
 
+import com.imansdev.ackownt.enums.Gender;
+import com.imansdev.ackownt.enums.MilitaryStatus;
 import com.imansdev.ackownt.model.Users;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -35,11 +37,11 @@ public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitar
     }
 
     private boolean isInvalidGender(Users user, ConstraintValidatorContext context) {
-        Users.Gender gender = user.getGender();
+        Gender gender = user.getGender();
 
         if (gender == null) {
             String validGenders = String.join(", ",
-                    Arrays.stream(Users.Gender.values()).map(Enum::name).toArray(String[]::new));
+                    Arrays.stream(Gender.values()).map(Enum::name).toArray(String[]::new));
             addConstraintViolation(context,
                     "The user's gender is required and must be include " + validGenders, "gender");
             return true;
@@ -48,28 +50,28 @@ public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitar
     }
 
     private boolean isInvalidMilitaryStatus(Users user, ConstraintValidatorContext context) {
-        Users.Gender gender = user.getGender();
-        Users.MilitaryStatus militaryStatus = user.getMilitaryStatus();
+        Gender gender = user.getGender();
+        MilitaryStatus militaryStatus = user.getMilitaryStatus();
 
         if (militaryStatus == null) {
-            String validStatuses = String.join(", ", Arrays.stream(Users.MilitaryStatus.values())
-                    .map(Enum::name).toArray(String[]::new));
+            String validStatuses = String.join(", ",
+                    Arrays.stream(MilitaryStatus.values()).map(Enum::name).toArray(String[]::new));
             addConstraintViolation(context,
                     "The military status is required and must include " + validStatuses,
                     "militaryStatus");
             return true;
         }
 
-        if (gender == Users.Gender.MALE && user.getAge() > cutOffAge) {
-            if (militaryStatus == Users.MilitaryStatus.NONE) {
+        if (gender == Gender.MALE && user.getAge() > cutOffAge) {
+            if (militaryStatus == MilitaryStatus.NONE) {
                 addConstraintViolation(context, "Male users above the " + cutOffAge
                         + " must not have military status of 'NONE'", "militaryStatus");
                 return true;
             }
         }
 
-        if (gender == Users.Gender.FEMALE) {
-            if (militaryStatus != Users.MilitaryStatus.NONE) {
+        if (gender == Gender.FEMALE) {
+            if (militaryStatus != MilitaryStatus.NONE) {
                 addConstraintViolation(context,
                         "The military status for female users must be 'NONE'", "militaryStatus");
                 return true;

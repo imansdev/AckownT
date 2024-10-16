@@ -1,12 +1,15 @@
 package com.imansdev.ackownt.dto;
 
+import com.imansdev.ackownt.enums.MilitaryStatus;
+
 public class UpdateUserDTO {
     private String name;
     private String surname;
     private String phoneNumber;
-    private String militaryStatus;
+    private MilitaryStatus militaryStatus;
 
-    public UpdateUserDTO(String name, String surname, String phoneNumber, String militaryStatus) {
+    public UpdateUserDTO(String name, String surname, String phoneNumber,
+            MilitaryStatus militaryStatus) {
         this.name = name;
         this.surname = surname;
         this.phoneNumber = phoneNumber;
@@ -37,11 +40,11 @@ public class UpdateUserDTO {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getMilitaryStatus() {
+    public MilitaryStatus getMilitaryStatus() {
         return militaryStatus;
     }
 
-    public void setMilitaryStatus(String militaryStatus) {
+    public void setMilitaryStatus(MilitaryStatus militaryStatus) {
         this.militaryStatus = militaryStatus;
     }
 }
