@@ -8,7 +8,6 @@ import com.imansdev.ackownt.dto.UserDTO;
 import com.imansdev.ackownt.enums.TransactionDescription;
 import com.imansdev.ackownt.enums.TransactionStatus;
 import com.imansdev.ackownt.enums.TransactionType;
-import com.imansdev.ackownt.exception.CustomServiceException;
 import com.imansdev.ackownt.model.Accounts;
 import com.imansdev.ackownt.model.Transactions;
 import com.imansdev.ackownt.model.Users;
@@ -26,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,8 +93,8 @@ public class MainService {
             throw new ValidationException("Initial deposit must be greater than " + minBalance);
         }
 
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomServiceException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         Accounts existingAccount = accountsRepository.findByUserId(user.getId()).orElse(null);
         if (existingAccount != null) {
@@ -128,8 +128,8 @@ public class MainService {
             throw new ValidationException("Amount must be a positive number");
         }
 
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomServiceException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         Accounts account = accountsRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ValidationException(
@@ -161,8 +161,8 @@ public class MainService {
                     "Amount must be between " + minWithdrawal + " and " + maxWithdrawal);
         }
 
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ValidationException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         Accounts account = accountsRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ValidationException("User's account not found"));
@@ -202,8 +202,8 @@ public class MainService {
     }
 
     public Map<String, Object> getUserAccountInfoAndTransactions(String email) {
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ValidationException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         Accounts account = accountsRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ValidationException("User's account not found"));
@@ -229,8 +229,8 @@ public class MainService {
     }
 
     public UserDTO getUserInfo(String email) {
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ValidationException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         return new UserDTO(user.getName(), user.getSurname(), user.getNationalId(),
                 user.getDateOfBirth().toString(), user.getEmail(), user.getPhoneNumber(),
@@ -239,8 +239,8 @@ public class MainService {
 
     @Transactional
     public UserDTO updateUserInfo(String email, UpdateUserDTO updateUserDTO) {
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ValidationException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         // Check if the new phone number exists for another user
         usersRepository.findByPhoneNumber(updateUserDTO.getPhoneNumber()).ifPresent(u -> {
@@ -274,8 +274,8 @@ public class MainService {
 
     @Transactional
     public void deleteUserAndRelatedData(String email) {
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new ValidationException("User not found"));
+        Users user = usersRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User not found with email: " + email));
 
         transactionsRepository.deleteByUserId(user.getId());
 

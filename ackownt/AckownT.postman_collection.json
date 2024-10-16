@@ -17,7 +17,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"iman\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"0018844221\",\n  \"dateOfBirth\": \"2000-02-02\",\n  \"email\": \"imanabc@example.com\",\n  \"phoneNumber\": \"09129966331\",\n  \"password\": \"password123\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"COMPLETED_SERVICE\"\n}"
+          "raw": "{\n  \"name\": \"iman\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"4528422034\",\n  \"dateOfBirth\": \"2000-02-02\",\n  \"email\": \"imanabc@example.com\",\n  \"phoneNumber\": \"09129966331\",\n  \"password\": \"password123\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"COMPLETED_SERVICE\"\n}"
         },
         "url": {
           "raw": "http://localhost:8080/api/v1/home/create",
@@ -29,7 +29,7 @@
       }
     },
     {
-      "name": "Create User (Invalid)",
+      "name": "Create User (Invalid-Empty Name)",
       "request": {
         "method": "POST",
         "header": [
