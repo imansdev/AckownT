@@ -7,13 +7,15 @@ public class UpdateUserDTO {
     private String surname;
     private String phoneNumber;
     private MilitaryStatus militaryStatus;
+    private String password;
 
     public UpdateUserDTO(String name, String surname, String phoneNumber,
-            MilitaryStatus militaryStatus) {
+            MilitaryStatus militaryStatus, String password) {
         this.name = name;
         this.surname = surname;
         this.phoneNumber = phoneNumber;
         this.militaryStatus = militaryStatus;
+        this.password = password;
     }
 
     public String getName() {
@@ -46,5 +48,13 @@ public class UpdateUserDTO {
 
     public void setMilitaryStatus(MilitaryStatus militaryStatus) {
         this.militaryStatus = militaryStatus;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

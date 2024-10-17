@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 public class MainService {
@@ -61,6 +62,7 @@ public class MainService {
     // Create a new Account for a User
     @Transactional
     public TransactionDTO createAccount(String email, Long amount) {
+        validateAmountIsPositive(amount);
         validateAmountGreaterThanMinBalance(amount);
         Users user = getUserByEmail(email);
         validateUserAccountDoesNotExist(user);
@@ -85,10 +87,12 @@ public class MainService {
     // Deduct an amount from the account
     @Transactional
     public TransactionDTO deductAmount(String email, Long amount) {
+        validateAmountIsPositive(amount);
         validateWithdrawalAmount(amount);
         Users user = getUserByEmail(email);
         Accounts account = getUserAccount(user);
         validateSufficientBalance(account, amount);
+        validateDailyDeductions(user, amount);
         updateAccountBalanceForDeduction(account, amount);
         Transactions transaction = recordTransaction(user, account, amount,
                 TransactionType.DEDUCTION, TransactionDescription.DEDUCTION_SUCCESSFUL);
@@ -120,6 +124,12 @@ public class MainService {
         Users user = getUserByEmail(email);
         validateUniquePhoneNumber(user, updateUserDTO.getPhoneNumber());
         updateUserDetails(user, updateUserDTO);
+
+        // Update password if it's provided
+        if (updateUserDTO.getPassword() != null && !updateUserDTO.getPassword().isEmpty()) {
+            String encodedPassword = passwordEncoder.encode(updateUserDTO.getPassword());
+            user.setPassword(encodedPassword);
+        }
         validateAndSaveUser(user);
         return convertToUserDTO(user);
     }
@@ -205,8 +215,19 @@ public class MainService {
         }
     }
 
+    private void validateDailyDeductions(Users user, Long amount) {
+        LocalDate today = LocalDate.now();
+        Long totalDeductionsToday =
+                transactionsRepository.findTotalDailyDeductions(user.getId(), today);
+
+        if (totalDeductionsToday + amount > maxWithdrawal) {
+            throw new ValidationException(
+                    "Total daily deductions must be less than " + maxWithdrawal);
+        }
+    }
+
     private void validateSufficientBalance(Accounts account, Long amount) {
-        if (account.getBalance() < amount - minBalance) {
+        if (account.getBalance() - minBalance < amount) {
             throw new ValidationException("Insufficient balance for this deduction");
         }
     }

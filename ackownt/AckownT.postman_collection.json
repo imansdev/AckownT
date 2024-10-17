@@ -29,7 +29,7 @@
       }
     },
     {
-      "name": "Create User (Invalid-Empty Name)",
+      "name": "Create User (Invalid - Empty Name)",
       "request": {
         "method": "POST",
         "header": [
@@ -40,7 +40,53 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"001\",\n  \"dateOfBirth\": \"2024-02-02\",\n  \"email\": \"invalid-email\",\n  \"phoneNumber\": \"091299\",\n  \"password\": \"\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"NONE\"\n}"
+          "raw": "{\n  \"name\": \"\",\n  \"surname\": \"\",\n  \"nationalId\": \"001\",\n  \"dateOfBirth\": \"\",\n  \"email\": \"invalid-email\",\n  \"phoneNumber\": \"091299\",\n  \"password\": \"\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"NONE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create User (Invalid - Invalid Formats)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"iman\",\n  \"surname\": \"abc\",\n  \"nationalId\": \"4528422034\",\n  \"dateOfBirth\": \"200002-02\",\n  \"email\": \"imanabc@example.com\",\n  \"phoneNumber\": \"09129966331\",\n  \"password\": \"password123\",\n  \"gender\": \"INVALID_GENDER\",\n  \"militaryStatus\": \"INVALID_STATUS\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/create",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create User (Invalid - militaryStatus Invalidations)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John\",\n  \"surname\": \"Doe\",\n  \"nationalId\": \"4528422034\",\n  \"dateOfBirth\": \"2000-01-01\",\n  \"email\": \"johndoe@example.com\",\n  \"phoneNumber\": \"09129966331\",\n  \"password\": \"password123\",\n  \"gender\": \"MALE\",\n  \"militaryStatus\": \"NONE\"\n}"
         },
         "url": {
           "raw": "http://localhost:8080/api/v1/home/create",
@@ -87,7 +133,7 @@
       ]
     },
     {
-      "name": "Login User (Invalid)",
+      "name": "Login User (Invalid - Wrong Password)",
       "request": {
         "method": "POST",
         "header": [
@@ -98,7 +144,30 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"nonexistent@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+          "raw": "{\n  \"email\": \"imanabc@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/home/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "home", "login"]
+        }
+      }
+    },
+    {
+      "name": "Login User (Invalid - Wrong Email)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"nonexistent@example.com\",\n  \"password\": \"password123\"\n}"
         },
         "url": {
           "raw": "http://localhost:8080/api/v1/home/login",
@@ -125,7 +194,7 @@
           }
         ],
         "url": {
-          "raw": "http://localhost:8080/api/v1/account/create?amount=20000",
+          "raw": "http://localhost:8080/api/v1/account/create?amount=9000000",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8080",
@@ -133,14 +202,14 @@
           "query": [
             {
               "key": "amount",
-              "value": "900000"
+              "value": "9000000"
             }
           ]
         }
       }
     },
     {
-      "name": "Create Account (Invalid Amount)",
+      "name": "Create Account (Invalid - Empty Amount)",
       "request": {
         "method": "POST",
         "header": [
@@ -148,6 +217,56 @@
             "key": "Content-Type",
             "value": "application/json"
           },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/create?amount=",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "create"]
+        }
+      }
+    },
+    {
+      "name": "Create Account (Invalid - Negative Amount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/create?amount=-1000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "create"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "-1000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Account (Invalid - Less Than Minimum)",
+      "request": {
+        "method": "POST",
+        "header": [
           {
             "key": "Authorization",
             "value": "Bearer {{jwt_token}}",
@@ -181,7 +300,7 @@
           }
         ],
         "url": {
-          "raw": "http://localhost:8080/api/v1/account/transaction/charge?amount=15000",
+          "raw": "http://localhost:8080/api/v1/account/transaction/charge?amount=1000000",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8080",
@@ -189,14 +308,34 @@
           "query": [
             {
               "key": "amount",
-              "value": "150000"
+              "value": "1000000"
             }
           ]
         }
       }
     },
     {
-      "name": "Charge Account (Invalid Amount)",
+      "name": "Charge Account (Invalid - Empty Amount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/charge?amount=",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "charge"]
+        }
+      }
+    },
+    {
+      "name": "Charge Account (Invalid - Negative Amount)",
       "request": {
         "method": "POST",
         "header": [
@@ -233,7 +372,7 @@
           }
         ],
         "url": {
-          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=2000",
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=5000000",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8080",
@@ -241,14 +380,14 @@
           "query": [
             {
               "key": "amount",
-              "value": "150000"
+              "value": "5000000"
             }
           ]
         }
       }
     },
     {
-      "name": "Deduct Amount (Invalid)",
+      "name": "Deduct Amount (Invalid - Empty Amount)",
       "request": {
         "method": "POST",
         "header": [
@@ -259,7 +398,27 @@
           }
         ],
         "url": {
-          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=50000",
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "deduction"]
+        }
+      }
+    },
+    {
+      "name": "Deduct Amount (Invalid - Negative Amount)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=-1000",
           "protocol": "http",
           "host": ["localhost"],
           "port": "8080",
@@ -267,7 +426,59 @@
           "query": [
             {
               "key": "amount",
-              "value": "50000"
+              "value": "-1000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Deduct Amount (Invalid - Outside Range)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=500000000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "deduction"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "500000000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Deduct Amount (Invalid - Daily deductions)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/transaction/deduction?amount=5000000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "transaction", "deduction"],
+          "query": [
+            {
+              "key": "amount",
+              "value": "5000000"
             }
           ]
         }
@@ -314,7 +525,7 @@
       }
     },
     {
-      "name": "Update User Info (Valid)",
+      "name": "Update User Info (Valid- Without change password)",
       "request": {
         "method": "PUT",
         "header": [
@@ -331,6 +542,90 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"newName\",\n  \"surname\": \"newSurname\",\n  \"phoneNumber\": \"09129966332\",\n  \"militaryStatus\": \"EXEMPT_FROM_SERVICE\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/update",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "update"]
+        }
+      }
+    },
+    {
+      "name": "Update User Info (Valid- With change password)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"newName\",\n  \"surname\": \"newSurname\",\n  \"phoneNumber\": \"09129966332\",\n  \"militaryStatus\": \"EXEMPT_FROM_SERVICE\",\n  \"password\": \"newSecurePassword123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/update",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "update"]
+        }
+      }
+    },
+    {
+      "name": "Update User Info (Invalid - Invalid Military Status)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John\",\n  \"surname\": \"Doe\",\n  \"phoneNumber\": \"09129966331\",\n  \"militaryStatus\": \"INVALID\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/v1/account/update",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "v1", "account", "update"]
+        }
+      }
+    },
+    {
+      "name": "Update User Info (Invalid)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"surname\": \"\",\n  \"phoneNumber\": \"0912996ss\",\n  \"militaryStatus\": \"EXEMPT_FROM_SERVICE\"\n}"
         },
         "url": {
           "raw": "http://localhost:8080/api/v1/account/update",
