@@ -35,7 +35,7 @@ public class MainController {
         String email = credentials.get("email");
         String password = credentials.get("password");
 
-        String token = mainService.GenerateToken(email, password);
+        String token = mainService.generateToken(email, password);
         Map<String, String> response = new HashMap<>();
         response.put("token", token);
         return response;
