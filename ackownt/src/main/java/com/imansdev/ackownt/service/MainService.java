@@ -54,6 +54,7 @@ public class MainService {
     @Transactional
     public UserDTO createUser(Users user) {
         validateUniqueUserFields(user);
+        validateUser(user);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         usersRepository.save(user);
         return convertToUserDTO(user);
@@ -130,7 +131,8 @@ public class MainService {
             String encodedPassword = passwordEncoder.encode(updateUserDTO.getPassword());
             user.setPassword(encodedPassword);
         }
-        validateAndSaveUser(user);
+        validateUser(user);
+        usersRepository.save(user);
         return convertToUserDTO(user);
     }
 
@@ -270,7 +272,7 @@ public class MainService {
         user.setMilitaryStatus(updateUserDTO.getMilitaryStatus());
     }
 
-    private void validateAndSaveUser(Users user) {
+    private void validateUser(Users user) {
         Set<ConstraintViolation<Users>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
             StringBuilder vio = new StringBuilder();
@@ -279,14 +281,16 @@ public class MainService {
             }
             throw new ValidationException(vio.toString());
         }
-        usersRepository.save(user);
+
     }
 
     // DTO Converters
     private UserDTO convertToUserDTO(Users user) {
         return new UserDTO(user.getName(), user.getSurname(), user.getNationalId(),
-                user.getDateOfBirth().toString(), user.getEmail(), user.getPhoneNumber(),
-                user.getGender().toString(), user.getMilitaryStatus().toString());
+                user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null,
+                user.getEmail(), user.getPhoneNumber(),
+                user.getGender() != null ? user.getGender().toString() : null,
+                user.getMilitaryStatus() != null ? user.getMilitaryStatus().toString() : null);
     }
 
     private TransactionDTO convertToTransactionDTO(Transactions transaction) {

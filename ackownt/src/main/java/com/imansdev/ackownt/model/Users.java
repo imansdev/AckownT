@@ -148,6 +148,22 @@ public class Users {
         this.militaryStatus = militaryStatus;
     }
 
+    public void setNationalId(String nationalId) {
+        this.nationalId = nationalId;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     @Override
     public String toString() {
         return "Users [id=" + id + ", name=" + name + ", surname=" + surname + ", nationalId="
