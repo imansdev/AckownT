@@ -1,8 +1,14 @@
 # AckownT
-**Ackownt** is a backend API that allows users to create and manage accounts, conduct financial transactions (including charges and deductions), and securely authenticate using JWT (JSON Web Token) for authorization. The system includes comprehensive validation mechanisms for user data, military status, and enforces business rules on transaction limits and initial deposit amounts.
+**AckownT** is a backend API that allows users to create and manage accounts, conduct financial transactions (including charges and deductions), and securely authenticate using JWT (JSON Web Token) for authorization. The system includes comprehensive validation mechanisms for user data, military status, and enforces business rules on transaction limits and initial deposit amounts.
 
 This backend service provides RESTful endpoints and is designed to ensure data integrity, secure authentication, and robust transaction management.
-## 2. Features
+<div>
+    <td align="center">
+        <img width="1107" alt="Screenshot 2024-10-20 at 7 19 33 PM" src="https://github.com/user-attachments/assets/c4e7b04b-44d4-486a-992d-cd9c89dd0284">
+    </td>
+  </div>
+  
+## 1. Features
 
 - **User Management:**
   - Create new users with unique email, phone number, and national ID.
@@ -28,13 +34,15 @@ This backend service provides RESTful endpoints and is designed to ensure data i
   - Enforce data input JSON parsing to validate incoming data in the correct formats.
   - Perform strict validation on transaction and account amounts.
   - Enforce business rules based on gender and military status.
-## 3. Technologies Used
+
+## 2. Technologies Used
 ### Back-end:
 - **Spring Boot**
 - **Spring Security**
 - **Spring Data JPA**
 - **Spring MVC**
-- **Spring Validation**: Validation framework using **Jakarta Bean Validation** annotations for object-level validation.
+- **Spring Validation**
+  -  Validation framework using **Jakarta Bean Validation** annotations for object-level validation.
 
 ### Database:
 - **H2 Database**
@@ -48,7 +56,8 @@ This backend service provides RESTful endpoints and is designed to ensure data i
 
 ### Version Control:
 - **Git**
-## 4. AckowntApplication API Documentation
+- 
+## 3. AckowntApplication API Documentation
 
 ### Base URL
 #### All API endpoints use the following base URL:
@@ -381,10 +390,9 @@ Creates a new user in the system.
 
 -   `200 OK`: Account deleted successfully.
 -   `400 Bad Request`: Validation error.
--   
-* * * * *
+- 
 
-## 5. Usage
+## 4. Usage
 
 Follow these steps to run the project:
 
