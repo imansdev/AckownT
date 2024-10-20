@@ -398,9 +398,8 @@ Follow these steps to run the project:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/your-project-name.git
-   cd your-project-name `
-
+   git clone =https://github.com/imansdev/AckownT.git
+   
 1.  **Run the H2 Database**:
 
     -   H2 is an in-memory database used for this project. Spring Boot will automatically configure and start the H2 database when the application is run.
@@ -408,16 +407,10 @@ Follow these steps to run the project:
 2.  **Run the Spring Boot project**:
 
     -   Use the following command to start the Spring Boot application:
-
-        bash
-
-        Copy code
-
         `mvn spring-boot:run`
-
     -   Alternatively, if you're using an IDE like IntelliJ or Eclipse, run the `main` method in the `AckowntApplication.java` file.
 3.  **Use Postman to test the APIs**:
 
     -   Open **Postman**.
-    -   Import the `postman_collection.json` file from the project folder into Postman.
+    -   Import the `AckownT.postman_collection.json` file from the project folder into Postman.
     -   Use the pre-configured URLs in the Postman collection to test the available APIs.
