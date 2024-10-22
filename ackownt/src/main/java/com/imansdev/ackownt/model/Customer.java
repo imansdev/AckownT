@@ -25,7 +25,7 @@ import jakarta.validation.constraints.Pattern;
 
 @Entity
 @ValidMilitaryStatus
-public class Users {
+public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -79,9 +79,9 @@ public class Users {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
-    private Accounts account;
+    private Account account;
 
-    public Users() {}
+    public Customer() {}
 
     public Long getId() {
         return id;
@@ -166,7 +166,7 @@ public class Users {
 
     @Override
     public String toString() {
-        return "Users [id=" + id + ", name=" + name + ", surname=" + surname + ", nationalId="
+        return "Customer [id=" + id + ", name=" + name + ", surname=" + surname + ", nationalId="
                 + nationalId + ", dateOfBirth=" + dateOfBirth + ", age=" + getAge() + ", gender="
                 + gender + ", email=" + email + ", phoneNumber=" + phoneNumber + ", militaryStatus="
                 + militaryStatus + "]";

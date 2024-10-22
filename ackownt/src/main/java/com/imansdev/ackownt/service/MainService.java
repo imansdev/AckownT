@@ -8,12 +8,12 @@ import com.imansdev.ackownt.dto.UserDTO;
 import com.imansdev.ackownt.enums.TransactionDescription;
 import com.imansdev.ackownt.enums.TransactionStatus;
 import com.imansdev.ackownt.enums.TransactionType;
-import com.imansdev.ackownt.model.Accounts;
-import com.imansdev.ackownt.model.Transactions;
-import com.imansdev.ackownt.model.Users;
-import com.imansdev.ackownt.repository.AccountsRepository;
-import com.imansdev.ackownt.repository.TransactionsRepository;
-import com.imansdev.ackownt.repository.UsersRepository;
+import com.imansdev.ackownt.model.Account;
+import com.imansdev.ackownt.model.Transaction;
+import com.imansdev.ackownt.model.Customer;
+import com.imansdev.ackownt.repository.AccountRepository;
+import com.imansdev.ackownt.repository.TransactionRepository;
+import com.imansdev.ackownt.repository.CustomerRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
@@ -31,11 +31,11 @@ import java.time.LocalDate;
 public class MainService {
 
     @Autowired
-    private UsersRepository usersRepository;
+    private CustomerRepository customerRepository;
     @Autowired
-    private AccountsRepository accountsRepository;
+    private AccountRepository accountRepository;
     @Autowired
-    private TransactionsRepository transactionsRepository;
+    private TransactionRepository transactionRepository;
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
     @Autowired
@@ -52,11 +52,11 @@ public class MainService {
 
     // Create a new User
     @Transactional
-    public UserDTO createUser(Users user) {
+    public UserDTO createUser(Customer user) {
         validateUniqueUserFields(user);
         validateUser(user);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        usersRepository.save(user);
+        customerRepository.save(user);
         return convertToUserDTO(user);
     }
 
@@ -65,10 +65,10 @@ public class MainService {
     public TransactionDTO createAccount(String email, Long amount) {
         validateAmountIsPositive(amount);
         validateAmountGreaterThanMinBalance(amount);
-        Users user = getUserByEmail(email);
+        Customer user = getUserByEmail(email);
         validateUserAccountDoesNotExist(user);
-        Accounts account = createNewAccount(user, amount);
-        Transactions transaction = recordTransaction(user, account, amount, TransactionType.CHARGE,
+        Account account = createNewAccount(user, amount);
+        Transaction transaction = recordTransaction(user, account, amount, TransactionType.CHARGE,
                 TransactionDescription.CHARGING_SUCCESSFUL);
         return convertToTransactionDTO(transaction);
     }
@@ -77,10 +77,10 @@ public class MainService {
     @Transactional
     public TransactionDTO chargeAccount(String email, Long amount) {
         validateAmountIsPositive(amount);
-        Users user = getUserByEmail(email);
-        Accounts account = getUserAccount(user);
+        Customer user = getUserByEmail(email);
+        Account account = getUserAccount(user);
         TransactionDescriptionForCharge(account, amount);
-        Transactions transaction = recordTransaction(user, account, amount, TransactionType.CHARGE,
+        Transaction transaction = recordTransaction(user, account, amount, TransactionType.CHARGE,
                 TransactionDescription.CHARGING_SUCCESSFUL);
         return convertToTransactionDTO(transaction);
     }
@@ -90,21 +90,21 @@ public class MainService {
     public TransactionDTO deductAmount(String email, Long amount) {
         validateAmountIsPositive(amount);
         validateWithdrawalAmount(amount);
-        Users user = getUserByEmail(email);
-        Accounts account = getUserAccount(user);
+        Customer user = getUserByEmail(email);
+        Account account = getUserAccount(user);
         validateSufficientBalance(account, amount);
         validateDailyDeductions(user, amount);
         updateAccountBalanceForDeduction(account, amount);
-        Transactions transaction = recordTransaction(user, account, amount,
+        Transaction transaction = recordTransaction(user, account, amount,
                 TransactionType.DEDUCTION, TransactionDescription.DEDUCTION_SUCCESSFUL);
         return convertToTransactionDTO(transaction);
     }
 
     // Get user account information and transactions
     public Map<String, Object> getUserAccountInfoAndTransactions(String email) {
-        Users user = getUserByEmail(email);
-        Accounts account = getUserAccount(user);
-        List<Transactions> transactions = transactionsRepository.findByUserId(user.getId());
+        Customer user = getUserByEmail(email);
+        Account account = getUserAccount(user);
+        List<Transaction> transactions = transactionRepository.findByUserId(user.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("account", convertToAccountDTO(account));
@@ -115,14 +115,14 @@ public class MainService {
 
     // Get user info
     public UserDTO getUserInfo(String email) {
-        Users user = getUserByEmail(email);
+        Customer user = getUserByEmail(email);
         return convertToUserDTO(user);
     }
 
     // Update user info
     @Transactional
     public UserDTO updateUserInfo(String email, UpdateUserDTO updateUserDTO) {
-        Users user = getUserByEmail(email);
+        Customer user = getUserByEmail(email);
         validateUniquePhoneNumber(user, updateUserDTO.getPhoneNumber());
         updateUserDetails(user, updateUserDTO);
 
@@ -132,27 +132,27 @@ public class MainService {
             user.setPassword(encodedPassword);
         }
         validateUser(user);
-        usersRepository.save(user);
+        customerRepository.save(user);
         return convertToUserDTO(user);
     }
 
     // Delete user and related data
     @Transactional
     public void deleteUserAndRelatedData(String email) {
-        Users user = getUserByEmail(email);
-        transactionsRepository.deleteByUserId(user.getId());
-        usersRepository.deleteById(user.getId());
+        Customer user = getUserByEmail(email);
+        transactionRepository.deleteByUserId(user.getId());
+        customerRepository.deleteById(user.getId());
     }
 
     // Authenticate user and generate JWT token
     public String generateToken(String email, String password) {
-        Users user = authenticateUser(email, password);
+        Customer user = authenticateUser(email, password);
         return jwtUtil.generateToken(user.getEmail());
     }
 
     // Authenticate user
-    public Users authenticateUser(String email, String password) {
-        Users user = getUserByEmail(email);
+    public Customer authenticateUser(String email, String password) {
+        Customer user = getUserByEmail(email);
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new ValidationException("Invalid password");
         }
@@ -160,40 +160,40 @@ public class MainService {
     }
 
     // ----- Helper Methods -----
-    private Accounts getUserAccount(Users user) {
-        return accountsRepository.findByUserId(user.getId())
+    private Account getUserAccount(Customer user) {
+        return accountRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ValidationException("User's account not found"));
     }
 
     // Helper method to validate user existence
-    private Users getUserByEmail(String email) {
-        return usersRepository.findByEmail(email).orElseThrow(
+    private Customer getUserByEmail(String email) {
+        return customerRepository.findByEmail(email).orElseThrow(
                 () -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
     // Helper method to validate if user exists based on national ID, email, and phone number
-    private void validateUniqueUserFields(Users user) {
-        if (usersRepository.findByEmail(user.getEmail()).isPresent()) {
+    private void validateUniqueUserFields(Customer user) {
+        if (customerRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new ValidationException("Email must be unique");
         }
-        if (usersRepository.findByPhoneNumber(user.getPhoneNumber()).isPresent()) {
+        if (customerRepository.findByPhoneNumber(user.getPhoneNumber()).isPresent()) {
             throw new ValidationException("Phone number must be unique");
         }
-        if (usersRepository.findByNationalId(user.getNationalId()).isPresent()) {
+        if (customerRepository.findByNationalId(user.getNationalId()).isPresent()) {
             throw new ValidationException("National ID must be unique");
         }
     }
 
-    private void validateUniquePhoneNumber(Users user, String phoneNumber) {
-        usersRepository.findByPhoneNumber(phoneNumber).ifPresent(existingUser -> {
+    private void validateUniquePhoneNumber(Customer user, String phoneNumber) {
+        customerRepository.findByPhoneNumber(phoneNumber).ifPresent(existingUser -> {
             if (!existingUser.getId().equals(user.getId())) {
                 throw new ValidationException("Phone number must be unique");
             }
         });
     }
 
-    private void validateUserAccountDoesNotExist(Users user) {
-        if (accountsRepository.findByUserId(user.getId()).isPresent()) {
+    private void validateUserAccountDoesNotExist(Customer user) {
+        if (accountRepository.findByUserId(user.getId()).isPresent()) {
             throw new ValidationException("Account already exists for the user");
         }
     }
@@ -217,10 +217,10 @@ public class MainService {
         }
     }
 
-    private void validateDailyDeductions(Users user, Long amount) {
+    private void validateDailyDeductions(Customer user, Long amount) {
         LocalDate today = LocalDate.now();
         Long totalDeductionsToday =
-                transactionsRepository.findTotalDailyDeductions(user.getId(), today);
+                transactionRepository.findTotalDailyDeductions(user.getId(), today);
 
         if (totalDeductionsToday + amount > maxWithdrawal) {
             throw new ValidationException(
@@ -228,55 +228,55 @@ public class MainService {
         }
     }
 
-    private void validateSufficientBalance(Accounts account, Long amount) {
+    private void validateSufficientBalance(Account account, Long amount) {
         if (account.getBalance() - minBalance < amount) {
             throw new ValidationException("Insufficient balance for this deduction");
         }
     }
 
-    private Accounts createNewAccount(Users user, Long amount) {
-        Accounts account = new Accounts();
+    private Account createNewAccount(Customer user, Long amount) {
+        Account account = new Account();
         account.setUser(user);
         account.setBalance(amount);
-        accountsRepository.save(account);
+        accountRepository.save(account);
         return account;
     }
 
-    private void TransactionDescriptionForCharge(Accounts account, Long amount) {
+    private void TransactionDescriptionForCharge(Account account, Long amount) {
         account.setBalance(account.getBalance() + amount);
-        accountsRepository.save(account);
+        accountRepository.save(account);
     }
 
-    private void updateAccountBalanceForDeduction(Accounts account, Long amount) {
+    private void updateAccountBalanceForDeduction(Account account, Long amount) {
         account.setBalance(account.getBalance() - amount);
-        accountsRepository.save(account);
+        accountRepository.save(account);
     }
 
-    private Transactions recordTransaction(Users user, Accounts account, Long amount,
+    private Transaction recordTransaction(Customer user, Account account, Long amount,
             TransactionType type, TransactionDescription description) {
-        Transactions transaction = new Transactions();
+        Transaction transaction = new Transaction();
         transaction.setUser(user);
         transaction.setTransactionName(type);
         transaction.setTransactionStatus(TransactionStatus.SUCCESSFUL);
         transaction.setAmount(amount);
         transaction.setDescription(description);
         transaction.setWithdrawalBalance(account.getBalance() - minBalance);
-        transactionsRepository.save(transaction);
+        transactionRepository.save(transaction);
         return transaction;
     }
 
-    private void updateUserDetails(Users user, UpdateUserDTO updateUserDTO) {
+    private void updateUserDetails(Customer user, UpdateUserDTO updateUserDTO) {
         user.setName(updateUserDTO.getName());
         user.setSurname(updateUserDTO.getSurname());
         user.setPhoneNumber(updateUserDTO.getPhoneNumber());
         user.setMilitaryStatus(updateUserDTO.getMilitaryStatus());
     }
 
-    private void validateUser(Users user) {
-        Set<ConstraintViolation<Users>> violations = validator.validate(user);
+    private void validateUser(Customer user) {
+        Set<ConstraintViolation<Customer>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
             StringBuilder vio = new StringBuilder();
-            for (ConstraintViolation<Users> violation : violations) {
+            for (ConstraintViolation<Customer> violation : violations) {
                 vio.append(violation.getMessage()).append(", ");
             }
             throw new ValidationException(vio.toString());
@@ -285,7 +285,7 @@ public class MainService {
     }
 
     // DTO Converters
-    private UserDTO convertToUserDTO(Users user) {
+    private UserDTO convertToUserDTO(Customer user) {
         return new UserDTO(user.getName(), user.getSurname(), user.getNationalId(),
                 user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null,
                 user.getEmail(), user.getPhoneNumber(),
@@ -293,14 +293,14 @@ public class MainService {
                 user.getMilitaryStatus() != null ? user.getMilitaryStatus().toString() : null);
     }
 
-    private TransactionDTO convertToTransactionDTO(Transactions transaction) {
+    private TransactionDTO convertToTransactionDTO(Transaction transaction) {
         return new TransactionDTO(transaction.getTransactionName().toString(),
                 transaction.getTransactionStatus().toString(), transaction.getAmount(),
                 transaction.getTrackingNumber(), transaction.getTransactionDate(),
                 transaction.getDescription().toString(), transaction.getWithdrawalBalance());
     }
 
-    private AccountDTO convertToAccountDTO(Accounts account) {
+    private AccountDTO convertToAccountDTO(Account account) {
         return new AccountDTO(account.getAccountNumber(), account.getBalance(),
                 account.getAccountCreationDate());
     }

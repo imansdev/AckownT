@@ -4,10 +4,10 @@ import com.imansdev.ackownt.auth.JwtUtil;
 import com.imansdev.ackownt.dto.UpdateUserDTO;
 import com.imansdev.ackownt.enums.Gender;
 import com.imansdev.ackownt.enums.MilitaryStatus;
-import com.imansdev.ackownt.model.Users;
-import com.imansdev.ackownt.repository.AccountsRepository;
-import com.imansdev.ackownt.repository.TransactionsRepository;
-import com.imansdev.ackownt.repository.UsersRepository;
+import com.imansdev.ackownt.model.Customer;
+import com.imansdev.ackownt.repository.AccountRepository;
+import com.imansdev.ackownt.repository.TransactionRepository;
+import com.imansdev.ackownt.repository.CustomerRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
@@ -35,13 +35,13 @@ class MainServiceTest {
     private Validator validator;
 
     @Mock
-    private UsersRepository usersRepository;
+    private CustomerRepository customerRepository;
 
     @Mock
-    private AccountsRepository accountsRepository;
+    private AccountRepository accountRepository;
 
     @Mock
-    private TransactionsRepository transactionsRepository;
+    private TransactionRepository transactionRepository;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -57,7 +57,7 @@ class MainServiceTest {
     @Test
     void testCreateUser_SuccessfulCreation() {
 
-        Users newUser = new Users();
+        Customer newUser = new Customer();
         newUser.setName("iman");
         newUser.setSurname("abc");
         newUser.setNationalId("4528422034");
@@ -68,23 +68,23 @@ class MainServiceTest {
         newUser.setGender(Gender.MALE);
         newUser.setMilitaryStatus(MilitaryStatus.COMPLETED_SERVICE);
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.empty());
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(validator.validate(any(Users.class))).thenReturn(Set.of()); // Mocking validation
+        when(validator.validate(any(Customer.class))).thenReturn(Set.of()); // Mocking validation
 
         mainService.createUser(newUser);
 
-        verify(usersRepository, times(1)).save(any(Users.class));
+        verify(customerRepository, times(1)).save(any(Customer.class));
     }
 
     @Test
     void testLoginUser_SuccessfulLogin() {
 
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
         user.setPassword("encodedPassword");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", user.getPassword())).thenReturn(true);
         when(jwtUtil.generateToken("imanabc@example.com")).thenReturn("mockToken");
 
@@ -99,8 +99,8 @@ class MainServiceTest {
 
     @Test
     void testCreateUser_InvalidDate() {
-        // Create a Users object with an invalid date format (future date)
-        Users invalidUser = new Users();
+        // Create a Customer object with an invalid date format (future date)
+        Customer invalidUser = new Customer();
         invalidUser.setName("iman");
         invalidUser.setSurname("abc");
         invalidUser.setNationalId("4528422034");
@@ -111,7 +111,7 @@ class MainServiceTest {
         invalidUser.setGender(Gender.MALE);
         invalidUser.setMilitaryStatus(MilitaryStatus.COMPLETED_SERVICE);
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage())
                 .thenReturn("The date of birth is required and must be in the past");
         when(validator.validate(invalidUser)).thenReturn(Set.of(violation));
@@ -127,7 +127,7 @@ class MainServiceTest {
 
     @Test
     void testCreateUser_EmptyOrNullFields() {
-        Users invalidUser = new Users();
+        Customer invalidUser = new Customer();
         invalidUser.setName(null);
         invalidUser.setSurname("");
         invalidUser.setNationalId(null);
@@ -136,7 +136,7 @@ class MainServiceTest {
         invalidUser.setPhoneNumber("09129966331");
         invalidUser.setPassword(null);
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage()).thenReturn("must not be blank");
         when(validator.validate(invalidUser)).thenReturn(Set.of(violation));
 
@@ -150,7 +150,7 @@ class MainServiceTest {
 
     @Test
     void testCreateUser_NonUniqueValues() {
-        Users invalidUser = new Users();
+        Customer invalidUser = new Customer();
         invalidUser.setName("iman");
         invalidUser.setSurname("abc");
         invalidUser.setNationalId("4528422034");
@@ -159,7 +159,7 @@ class MainServiceTest {
         invalidUser.setPhoneNumber("09129966331");
         invalidUser.setPassword("password123");
 
-        when(usersRepository.findByEmail("alreadyused@example.com"))
+        when(customerRepository.findByEmail("alreadyused@example.com"))
                 .thenReturn(Optional.of(invalidUser));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
@@ -171,8 +171,8 @@ class MainServiceTest {
 
     @Test
     void testCreateUser_BusinessRuleViolation_MaleWithMilitaryStatusNone() {
-        // Create a Users object with invalid military status for a male user
-        Users invalidUser = new Users();
+        // Create a customer object with invalid military status for a male user
+        Customer invalidUser = new Customer();
         invalidUser.setName("iman");
         invalidUser.setSurname("abc");
         invalidUser.setNationalId("4528422034");
@@ -183,7 +183,7 @@ class MainServiceTest {
         invalidUser.setGender(Gender.MALE);
         invalidUser.setMilitaryStatus(MilitaryStatus.NONE);
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage()).thenReturn("must not have military status of 'NONE'");
         when(validator.validate(invalidUser)).thenReturn(Set.of(violation));
 
@@ -196,7 +196,7 @@ class MainServiceTest {
 
     @Test
     void testCreateUser_BusinessRuleViolation_FemaleWithInvalidMilitaryStatus() {
-        Users invalidUser = new Users();
+        Customer invalidUser = new Customer();
         invalidUser.setName("Jane");
         invalidUser.setSurname("abc");
         invalidUser.setNationalId("4528422034");
@@ -207,7 +207,7 @@ class MainServiceTest {
         invalidUser.setGender(Gender.FEMALE);
         invalidUser.setMilitaryStatus(MilitaryStatus.COMPLETED_SERVICE); // Violation
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage())
                 .thenReturn("The military status for female users must be 'NONE'");
         when(validator.validate(invalidUser)).thenReturn(Set.of(violation));
@@ -224,11 +224,11 @@ class MainServiceTest {
 
     @Test
     void testLoginUser_IncorrectPassword() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
         user.setPassword("encodedPassword");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpassword", "encodedPassword")).thenReturn(false);
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
@@ -241,7 +241,8 @@ class MainServiceTest {
     @Test
     void testLoginUser_IncorrectEmail() {
 
-        when(usersRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+        when(customerRepository.findByEmail("nonexistent@example.com"))
+                .thenReturn(Optional.empty());
 
         UsernameNotFoundException ex = assertThrows(UsernameNotFoundException.class, () -> {
             mainService.generateToken("nonexistent@example.com", "password123");
@@ -254,10 +255,10 @@ class MainServiceTest {
 
     @Test
     void testCreateAccount_EmptyAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.createAccount("imanabc@example.com", null);
@@ -268,10 +269,10 @@ class MainServiceTest {
 
     @Test
     void testCreateAccount_NegativeAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.createAccount("imanabc@example.com", -1000L);
@@ -286,9 +287,9 @@ class MainServiceTest {
         Long amount = 5000L; // Less than the minimum balance
         String email = "test@example.com";
 
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail(email);
-        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         // Mock the value of minBalance
         ReflectionTestUtils.setField(mainService, "minBalance", 10000L);
@@ -305,10 +306,10 @@ class MainServiceTest {
 
     @Test
     void testChargeAccount_EmptyAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.chargeAccount("imanabc@example.com", null);
@@ -319,10 +320,10 @@ class MainServiceTest {
 
     @Test
     void testChargeAccount_NegativeAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.chargeAccount("imanabc@example.com", -500L);
@@ -335,10 +336,10 @@ class MainServiceTest {
 
     @Test
     void testDeductAmount_EmptyAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.deductAmount("imanabc@example.com", null);
@@ -349,10 +350,10 @@ class MainServiceTest {
 
     @Test
     void testDeductAmount_NegativeAmount() {
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         ValidationException exception = assertThrows(ValidationException.class, () -> {
             mainService.deductAmount("imanabc@example.com", -1000L);
@@ -366,16 +367,16 @@ class MainServiceTest {
     @Test
     void testUpdateUserInfo_InvalidPhoneNumber() {
 
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         UpdateUserDTO updateUserDTO = new UpdateUserDTO("iman", "abc", "invalidPhone",
                 MilitaryStatus.COMPLETED_SERVICE, null);
 
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage()).thenReturn("Phone number must be exactly 11 digits");
         when(validator.validate(user)).thenReturn(Set.of(violation));
 
@@ -389,16 +390,16 @@ class MainServiceTest {
     @Test
     void testUpdateUserInfo_EmptyFields() {
 
-        Users user = new Users();
+        Customer user = new Customer();
         user.setEmail("imanabc@example.com");
 
-        when(usersRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
+        when(customerRepository.findByEmail("imanabc@example.com")).thenReturn(Optional.of(user));
 
         UpdateUserDTO updateUserDTO =
                 new UpdateUserDTO("", "", "09129966331", MilitaryStatus.COMPLETED_SERVICE, null);
 
 
-        ConstraintViolation<Users> violation = mock(ConstraintViolation.class);
+        ConstraintViolation<Customer> violation = mock(ConstraintViolation.class);
         when(violation.getMessage()).thenReturn("must not be blank");
         when(validator.validate(user)).thenReturn(Set.of(violation));
 

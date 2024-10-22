@@ -3,20 +3,20 @@ package com.imansdev.ackownt.validation;
 import com.imansdev.ackownt.enums.Gender;
 import com.imansdev.ackownt.enums.MilitaryStatus;
 import com.imansdev.ackownt.exception.ValidationException;
-import com.imansdev.ackownt.model.Users;
+import com.imansdev.ackownt.model.Customer;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 import java.time.Period;
 import org.springframework.beans.factory.annotation.Value;
 
-public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitaryStatus, Users> {
+public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitaryStatus, Customer> {
 
     @Value("${validation.age}")
     private int cutOffAge;
 
     @Override
-    public boolean isValid(Users user, ConstraintValidatorContext context) {
+    public boolean isValid(Customer user, ConstraintValidatorContext context) {
         try {
             if (isInvalidDateOfBirth(user, context))
                 return false;
@@ -33,7 +33,7 @@ public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitar
         return true;
     }
 
-    private boolean isInvalidDateOfBirth(Users user, ConstraintValidatorContext context)
+    private boolean isInvalidDateOfBirth(Customer user, ConstraintValidatorContext context)
             throws ValidationException {
         LocalDate dateOfBirth;
         dateOfBirth = user.getDateOfBirth();
@@ -44,7 +44,7 @@ public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitar
         return false;
     }
 
-    private boolean isInvalidGender(Users user, ConstraintValidatorContext context)
+    private boolean isInvalidGender(Customer user, ConstraintValidatorContext context)
             throws ValidationException {
         Gender gender;
         gender = user.getGender();
@@ -56,7 +56,7 @@ public class MilitaryStatusValidator implements ConstraintValidator<ValidMilitar
         return false;
     }
 
-    private boolean isInvalidMilitaryStatus(Users user, ConstraintValidatorContext context)
+    private boolean isInvalidMilitaryStatus(Customer user, ConstraintValidatorContext context)
             throws ValidationException {
         MilitaryStatus militaryStatus;
         militaryStatus = user.getMilitaryStatus();

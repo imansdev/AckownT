@@ -18,7 +18,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.Min;
 
 @Entity
-public class Transactions {
+public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,7 +51,7 @@ public class Transactions {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    private Customer user;
 
     private static final SecureRandom secureRandom = new SecureRandom();
 
@@ -118,17 +118,17 @@ public class Transactions {
         return withdrawalBalance;
     }
 
-    public Users getUser() {
+    public Customer getUser() {
         return user;
     }
 
-    public void setUser(Users user) {
+    public void setUser(Customer user) {
         this.user = user;
     }
 
     @Override
     public String toString() {
-        return "Transactions [id=" + id + ", transactionName=" + transactionName
+        return "Transaction [id=" + id + ", transactionName=" + transactionName
                 + ", transactionStatus=" + transactionStatus + ", amount=" + amount
                 + ", trackingNumber=" + trackingNumber + ", transactionDate=" + transactionDate
                 + ", description=" + description + ", withdrawalBalance=" + withdrawalBalance

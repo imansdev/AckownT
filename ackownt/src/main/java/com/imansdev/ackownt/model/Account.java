@@ -13,7 +13,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.Min;
 
 @Entity
-public class Accounts {
+public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class Accounts {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    private Customer user;
 
     private static final SecureRandom secureRandom = new SecureRandom();
 
@@ -59,7 +59,7 @@ public class Accounts {
         return balance;
     }
 
-    public Users getUser() {
+    public Customer getUser() {
         return user;
     }
 
@@ -71,13 +71,13 @@ public class Accounts {
         this.balance = balance;
     }
 
-    public void setUser(Users user) {
+    public void setUser(Customer user) {
         this.user = user;
     }
 
     @Override
     public String toString() {
-        return "Accounts [id=" + id + ", accountNumber=" + accountNumber + ", balance=" + balance
+        return "Account [id=" + id + ", accountNumber=" + accountNumber + ", balance=" + balance
                 + ", accountCreationDate=" + accountCreationDate + ", user=" + user + "]";
     }
 

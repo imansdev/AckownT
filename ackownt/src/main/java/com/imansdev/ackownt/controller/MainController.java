@@ -3,7 +3,7 @@ package com.imansdev.ackownt.controller;
 import com.imansdev.ackownt.dto.TransactionDTO;
 import com.imansdev.ackownt.dto.UpdateUserDTO;
 import com.imansdev.ackownt.dto.UserDTO;
-import com.imansdev.ackownt.model.Users;
+import com.imansdev.ackownt.model.Customer;
 import com.imansdev.ackownt.service.MainService;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class MainController {
 
 
     @PostMapping("/home/create")
-    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody Users user) {
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody Customer user) {
         UserDTO createdUserDTO = mainService.createUser(user);
         return new ResponseEntity<>(createdUserDTO, HttpStatus.CREATED);
     }
